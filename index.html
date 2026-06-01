@@ -785,32 +785,37 @@ const W = [
 const SPEAK_ICON = '<svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>';
 
 let currentAudio = null;
+// Shared hidden audio element — avoids iOS autoplay block
+const _audio = document.createElement('audio');
+_audio.crossOrigin = 'anonymous';
+document.body.appendChild(_audio);
+
 function speak(text, btn){
-  // stop any playing audio
-  if(currentAudio){
-    currentAudio.pause();
-    currentAudio = null;
-  }
   document.querySelectorAll('.speak-btn.speaking').forEach(b=>b.classList.remove('speaking'));
+  _audio.pause();
+  _audio.onended = null;
+  _audio.onerror = null;
 
-  // clean text — strip non-Korean chars for cleaner pronunciation
   const clean = text.replace(/[（）()／/＋+·。！？,.，、…]/g,' ').trim();
-  const url = 'https://translate.google.com/translate_tts?ie=UTF-8&tl=ko&client=tw-ob&q=' + encodeURIComponent(clean);
 
-  const audio = new Audio(url);
-  audio.playbackRate = 0.9;
-  currentAudio = audio;
-  if(btn){
-    btn.classList.add('speaking');
-    audio.onended = ()=>{ btn.classList.remove('speaking'); currentAudio=null; };
-    audio.onerror = ()=>{
-      btn.classList.remove('speaking');
-      currentAudio = null;
-      // fallback to Web Speech API if Google fails
-      fallbackSpeak(text, btn);
-    };
+  // Try multiple TTS sources in order
+  const sources = [
+    'https://translate.googleapis.com/translate_tts?ie=UTF-8&tl=ko&client=gtx&q=' + encodeURIComponent(clean),
+    'https://translate.google.com/translate_tts?ie=UTF-8&tl=ko&client=tw-ob&q=' + encodeURIComponent(clean),
+  ];
+
+  function trySource(i){
+    if(i >= sources.length){ fallbackSpeak(text, btn); return; }
+    _audio.src = sources[i];
+    _audio.playbackRate = 0.9;
+    if(btn){
+      btn.classList.add('speaking');
+      _audio.onended = ()=>{ btn.classList.remove('speaking'); };
+      _audio.onerror = ()=>{ btn.classList.remove('speaking'); trySource(i+1); };
+    }
+    _audio.play().catch(()=>{ if(btn) btn.classList.remove('speaking'); trySource(i+1); });
   }
-  audio.play().catch(()=>fallbackSpeak(text, btn));
+  trySource(0);
 }
 function fallbackSpeak(text, btn){
   if(!window.speechSynthesis) return;
