@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="한국어">
+<meta name="theme-color" content="#163028">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<script>
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js')
+        .then(()=>console.log('SW registered'))
+        .catch(e=>console.log('SW error', e));
+    });
+  }
+</script>
+<title>韓文 10 週密集計畫</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;600&family=Noto+Sans+TC:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1c2e2a;--paper:#eef4f2;--cream:#e0ece8;--accent:#2a7a6a;--gold:#1a6080;--muted:#5a7a72;--line:#b8d4cc;--success:#1a8060;--highlight:#d0ece4;--blue:#1a5a80;--header:#163028;--rainbow:linear-gradient(90deg,#e07060,#e09040,#80b060,#2a9a80,#2070b0,#7060c0)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans TC',sans-serif;background:var(--paper);color:var(--ink);min-height:100vh}
+header{background:var(--header);color:var(--paper);padding:1.8rem 2rem 1.4rem;position:sticky;top:0;z-index:100;display:flex;align-items:flex-end;gap:2rem}
+.header-title .kr{font-family:'Noto Serif KR',serif;font-size:1.6rem;font-weight:300;letter-spacing:.1em}
+.header-title .sub{font-size:.7rem;color:#8ab8b0;letter-spacing:.15em;text-transform:uppercase;margin-top:.2rem}
+.header-badge{background:var(--accent);color:#f0ece4;font-size:.65rem;letter-spacing:.12em;padding:.3rem .7rem;border-radius:2px;font-family:'DM Mono',monospace}
+.progress-bar-wrap{flex:1;max-width:280px}
+.progress-label{font-size:.68rem;color:#8ab8b0;letter-spacing:.1em;margin-bottom:.4rem;display:flex;justify-content:space-between}
+.progress-bar{height:3px;background:#1a5048;border-radius:2px;overflow:hidden}
+.progress-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .4s ease}
+.layout{display:grid;grid-template-columns:240px 1fr;min-height:calc(100vh - 76px)}
+aside{background:var(--cream);border-right:1px solid var(--line);padding:1.2rem 0;overflow-y:auto;max-height:calc(100vh - 76px);position:sticky;top:76px}
+.phase-label{font-size:.62rem;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);padding:.9rem 1.2rem .3rem;font-weight:500}
+.week-btn{width:100%;text-align:left;background:none;border:none;padding:.6rem 1.2rem;cursor:pointer;display:flex;align-items:flex-start;gap:.7rem;font-family:'Noto Sans TC',sans-serif;font-size:.8rem;color:var(--ink);transition:background .15s}
+.week-btn:hover{background:rgba(0,0,0,.05)}
+.week-btn.active{background:var(--header);color:var(--paper)}
+.week-btn.active .wnum{background:var(--accent);color:var(--paper)}
+.week-btn.completed .wnum{background:var(--success);color:#f0ece4}
+.week-btn.rainbow-week .wnum{background:var(--rainbow);color:#f0ece4}
+.wnum{font-family:'DM Mono',monospace;font-size:.68rem;background:var(--line);min-width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.wtopic{flex:1;line-height:1.35}
+.wkr{font-family:'Noto Serif KR',serif;font-size:.72rem;color:var(--muted);display:block;margin-top:1px}
+.week-btn.active .wkr{color:#7abcb0}
+main{padding:2.2rem 2.8rem;max-width:840px}
+.week-panel{display:none;animation:fadeIn .3s ease}
+.week-panel.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.week-header{display:flex;align-items:flex-start;gap:1rem;margin-bottom:1.8rem;padding-bottom:1rem;border-bottom:2px solid var(--accent)}
+.week-num-big{font-family:'DM Mono',monospace;font-size:.75rem;color:var(--muted);letter-spacing:.1em;padding-top:.3rem}
+.week-titles{flex:1}
+.week-title-big{font-family:'Noto Serif KR',serif;font-size:1.5rem;font-weight:300;line-height:1.3}
+.week-subtitle{font-size:.75rem;color:var(--muted);margin-top:.3rem;letter-spacing:.05em}
+.rainbow-banner{background:var(--rainbow);padding:2px;border-radius:4px;margin-bottom:1.5rem}
+.rainbow-inner{background:var(--header);color:var(--paper);padding:.7rem 1.2rem;border-radius:3px;font-size:.8rem;line-height:1.6}
+.rainbow-inner strong{color:#a0e8d8}
+.complete-btn{font-family:'Noto Sans TC',sans-serif;font-size:.72rem;padding:.38rem .9rem;border:1.5px solid var(--accent);background:none;cursor:pointer;border-radius:2px;white-space:nowrap;transition:all .2s;margin-top:.2rem;color:var(--ink)}
+.complete-btn:hover{background:var(--accent);color:var(--paper)}
+.complete-btn.done{background:var(--success);border-color:var(--success);color:var(--paper)}
+.topic-tabs{display:flex;gap:0;margin-bottom:1.5rem;border-bottom:1px solid var(--line)}
+.topic-tab{padding:.55rem 1.2rem;font-size:.78rem;cursor:pointer;border:none;background:none;font-family:'Noto Sans TC',sans-serif;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .2s}
+.topic-tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:500}
+.topic-panel{display:none}
+.topic-panel.active{display:block}
+.section{margin-bottom:1.8rem}
+.section-title{font-size:.66rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:.9rem;font-weight:500;display:flex;align-items:center;gap:.5rem}
+.section-title::after{content:'';flex:1;height:1px;background:var(--line)}
+.vocab-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:.55rem}
+.vocab-card{background:#eef6f2;border:1px solid var(--line);padding:.75rem .9rem;border-radius:4px;cursor:pointer;transition:all .2s}
+.vocab-card:hover{border-color:var(--accent)}
+.vocab-card .kr-word{font-family:'Noto Serif KR',serif;font-size:1.1rem;display:block}
+.vocab-card .romanization{font-family:'DM Mono',monospace;font-size:.68rem;color:var(--muted);display:block;margin-top:.1rem}
+.vocab-card .meaning{font-size:.78rem;margin-top:.45rem;display:none;border-top:1px solid var(--line);padding-top:.45rem}
+.vocab-card.revealed .meaning{display:block}
+.vocab-card.revealed{background:var(--highlight)}
+.grammar-box{background:#f4faf8;border-left:3px solid var(--accent);padding:1.1rem 1.4rem;margin-bottom:.9rem;border-radius:0 4px 4px 0}
+.grammar-pattern{font-family:'Noto Serif KR',serif;font-size:1.05rem;color:var(--accent);margin-bottom:.4rem}
+.grammar-explain{font-size:.82rem;color:var(--muted);margin-bottom:.7rem;line-height:1.7}
+.grammar-example{font-size:.88rem;line-height:1.9}
+.grammar-example .kr{font-family:'Noto Serif KR',serif}
+.grammar-example .zh{color:var(--muted);font-size:.8rem}
+.dialogue{display:flex;flex-direction:column;gap:.75rem}
+.dialogue-line{display:flex;gap:.9rem;align-items:flex-start}
+.speaker{font-family:'DM Mono',monospace;font-size:.62rem;background:var(--accent);color:var(--paper);padding:.18rem .45rem;border-radius:2px;white-space:nowrap;margin-top:.2rem}
+.speaker.b{background:var(--blue)}
+.speaker.c{background:var(--success)}
+.dialogue-text .kr{font-family:'Noto Serif KR',serif;font-size:.95rem;display:block}
+.dialogue-text .zh{font-size:.76rem;color:var(--muted)}
+.quiz-wrap{display:flex;flex-direction:column;gap:1rem}
+.quiz-item{background:#eef6f2;border:1px solid var(--line);padding:1.1rem 1.4rem;border-radius:4px}
+.quiz-q{font-size:.9rem;margin-bottom:.9rem;line-height:1.6}
+.quiz-q .kr{font-family:'Noto Serif KR',serif;font-size:1.05rem}
+.quiz-options{display:flex;flex-direction:column;gap:.45rem}
+.quiz-opt{background:var(--cream);border:1.5px solid transparent;padding:.55rem .9rem;border-radius:3px;cursor:pointer;font-size:.82rem;transition:all .15s;text-align:left;font-family:'Noto Sans TC',sans-serif}
+.quiz-opt:hover:not(:disabled){border-color:var(--gold)}
+.quiz-opt.correct{background:#c8e8e0;border-color:var(--success);color:#1a6050}
+.quiz-opt.wrong{background:#d8e8f0;border-color:#5080a0;color:#204060}
+.tip-box{background:#d8eee8;border:1px solid #a0ccbc;border-radius:4px;padding:.9rem 1.1rem;font-size:.8rem;line-height:1.7;margin-bottom:1.2rem}
+.tip-box strong{color:var(--gold)}
+.week-nav{display:flex;justify-content:space-between;margin-top:2.5rem;padding-top:1.2rem;border-top:1px solid var(--line)}
+.nav-btn{font-family:'Noto Sans TC',sans-serif;font-size:.78rem;padding:.55rem 1.3rem;background:none;border:1.5px solid var(--accent);color:var(--ink);cursor:pointer;border-radius:2px;display:flex;align-items:center;gap:.4rem;transition:all .2s}
+.nav-btn:hover:not(:disabled){background:var(--accent);color:var(--paper)}
+.nav-btn:disabled{opacity:.3;cursor:not-allowed}
+/* TTS */
+.speak-btn{display:inline-flex;align-items:center;justify-content:center;background:none;border:none;cursor:pointer;padding:0 0 0 .35rem;opacity:.4;transition:opacity .2s;vertical-align:middle;flex-shrink:0}
+.speak-btn:hover{opacity:1}
+.speak-btn svg{width:14px;height:14px;fill:var(--accent)}
+.speak-btn.speaking svg{fill:var(--success);animation:pulse .6s ease infinite alternate}
+@keyframes pulse{from{opacity:.5}to{opacity:1}}
+.vocab-card{background:#eef6f2;border:1px solid var(--line);padding:.75rem .9rem;border-radius:4px;cursor:default;transition:border-color .2s}
+.vocab-card:hover{border-color:var(--accent)}
+.vocab-card-top{display:flex;align-items:flex-start;justify-content:space-between}
+.vocab-card-text{flex:1;cursor:pointer}
+.vocab-card .kr-word{font-family:'Noto Serif KR',serif;font-size:1.1rem;display:block}
+.vocab-card .romanization{font-family:'DM Mono',monospace;font-size:.68rem;color:var(--muted);display:block;margin-top:.1rem}
+.vocab-card .meaning{font-size:.78rem;margin-top:.45rem;display:none;border-top:1px solid var(--line);padding-top:.45rem}
+.vocab-card.revealed .meaning{display:block}
+.vocab-card.revealed{background:var(--highlight)}
+.dialogue-kr-wrap{display:flex;align-items:baseline;gap:.1rem;flex-wrap:wrap}
+.tts-notice{font-size:.67rem;color:var(--muted);text-align:right;padding:.3rem 0 0;letter-spacing:.04em}
+@media(max-width:680px){.layout{grid-template-columns:1fr}aside{position:static;max-height:none;display:flex;overflow-x:auto;padding:.5rem 0}main{padding:1.4rem 1rem}.phase-label{display:none}.week-btn{flex-direction:column;align-items:center;padding:.5rem .6rem;min-width:72px;font-size:.7rem}}
+</style>
+</head>
+<body>
+<header>
+  <div class="header-title">
+    <div style="display:flex;align-items:center;gap:.7rem;margin-bottom:.3rem">
+      <div class="kr">한국어 속성반</div>
+      <div class="header-badge">10-WEEK INTENSIVE</div>
+    </div>
+    <div class="sub">首爾出發前完整準備 · Seoul-Ready in 10 Weeks</div>
+  </div>
+  <div class="progress-bar-wrap">
+    <div class="progress-label"><span>學習進度</span><span id="progress-text">0 / 10 週</span></div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+  </div>
+</header>
+<div class="layout">
+<aside id="sidebar"></aside>
+<main id="main-content"></main>
+</div>
+<script>
+const W = [
+  {
+    id:1, kr:'한글 완성', titles:['韓文字母：母音與子音','終聲（받침）與連音'],
+    topics:[
+      {
+        label:'① 字母系統',
+        tip:'建議每天花20分鐘寫字母。激音時手放嘴前應感受氣流，緊音則要緊繃喉嚨。',
+        vocab:[
+          {kr:'아/이/우/에/오',rom:'a/i/u/e/o',zh:'五個基本母音'},
+          {kr:'가나다라마',rom:'ga-na-da-ra-ma',zh:'子音ㄱㄴㄷㄹㅁ＋母音ㅏ'},
+          {kr:'激音 ㅋ/ㅌ/ㅍ/ㅊ',rom:'k/t/p/ch',zh:'送氣強的子音'},
+          {kr:'緊音 ㄲ/ㄸ/ㅃ/ㅆ/ㅉ',rom:'kk/tt/pp/ss/jj',zh:'緊繃喉嚨的子音'},
+          {kr:'한글',rom:'han-geul',zh:'韓文字母系統'},
+          {kr:'발음',rom:'ba-reum',zh:'發音'},
+        ],
+        grammar:[{
+          pattern:'韓文音節：초성＋중성＋받침',
+          explain:'每個韓文音節是方塊，由「初聲（子音）＋中聲（母音）＋終聲（可省略）」組成。平音、激音、緊音是發音三大類。',
+          examples:[
+            {kr:'감 = ㄱ＋ㅏ＋ㅁ',zh:'初聲g＋中聲a＋終聲m'},
+            {kr:'ㄱ / ㅋ / ㄲ',zh:'平音 / 激音 / 緊音'},
+          ]
+        }],
+        dialogue:[
+          {sp:'A',kr:'안녕하세요!',zh:'您好！'},
+          {sp:'B',kr:'안녕하세요! 처음 뵙겠습니다.',zh:'您好！初次見面。'},
+        ],
+        quiz:[
+          {q:'下列哪個是母音？',opts:['ㄱ','ㅏ','ㄴ','ㄷ'],ans:1},
+          {q:'「ㄷ」的激音是？',opts:['ㄸ','ㅌ','ㄹ','ㅎ'],ans:1},
+        ]
+      },
+      {
+        label:'② 終聲連音',
+        tip:'連音是韓文最重要的發音規則：終聲遇到空子音ㅇ就往右移。',
+        vocab:[
+          {kr:'밥',rom:'bap',zh:'飯（終聲ㅂ）'},
+          {kr:'물',rom:'mul',zh:'水（終聲ㄹ）'},
+          {kr:'책',rom:'chaek',zh:'書（終聲ㄱ）'},
+          {kr:'밥이 → [바비]',rom:'ba-bi',zh:'連音後發音'},
+          {kr:'학교',rom:'hak-gyo',zh:'學校'},
+          {kr:'음악',rom:'eu-mak',zh:'音樂'},
+        ],
+        grammar:[{
+          pattern:'連音法則（연음법칙）',
+          explain:'終聲後接ㅇ開頭的音節時，終聲移至下一音節發音。終聲實際只有7種發音：ㄱ ㄴ ㄷ ㄹ ㅁ ㅂ ㅇ。',
+          examples:[
+            {kr:'밥이 → [바비]',zh:'飯＋主格助詞'},
+            {kr:'책이 → [채기]',zh:'書＋主格助詞'},
+          ]
+        }],
+        dialogue:[
+          {sp:'A',kr:'밥 먹었어요?',zh:'吃飯了嗎？'},
+          {sp:'B',kr:'네, 먹었어요.',zh:'吃了。'},
+        ],
+        quiz:[
+          {q:'「밥이」的實際發音是？',opts:['[밥이]','[바비]','[바피]','[밥피]'],ans:1},
+          {q:'終聲共有幾種實際發音？',opts:['19種','14種','7種','21種'],ans:2},
+        ]
+      }
+    ]
+  },
+  {
+    id:2, kr:'숫자와 인사', titles:['數字、日期與時間','打招呼與自我介紹'],
+    topics:[
+      {
+        label:'① 數字日期',
+        tip:'記住星期：월화수목금토일，對應月火水木金土日。漢字音用於日期時間；固有語用於數量。',
+        vocab:[
+          {kr:'일/이/삼/사/오',rom:'il/i/sam/sa/o',zh:'一二三四五（漢字音）'},
+          {kr:'하나/둘/셋/넷/다섯',rom:'ha-na/dul/set/net/da-seot',zh:'一二三四五（固有語）'},
+          {kr:'오늘',rom:'o-neul',zh:'今天'},
+          {kr:'내일',rom:'nae-il',zh:'明天'},
+          {kr:'몇 시예요?',rom:'myeot si-ye-yo',zh:'幾點了？'},
+          {kr:'7월 8일',rom:'chil-wol pa-il',zh:'7月8日'},
+        ],
+        grammar:[{
+          pattern:'時刻：固有語 시 ＋ 漢字音 분',
+          explain:'「幾點幾分」：點（時）用固有語，分用漢字音。',
+          examples:[
+            {kr:'두 시 삼십 분',zh:'2點30分'},
+            {kr:'열두 시',zh:'12點'},
+          ]
+        }],
+        dialogue:[
+          {sp:'A',kr:'오늘이 무슨 요일이에요?',zh:'今天是星期幾？'},
+          {sp:'B',kr:'오늘은 화요일이에요.',zh:'今天是星期二。'},
+        ],
+        quiz:[
+          {q:'日期「幾號」用哪套數字？',opts:['固有語','漢字音','兩者皆可','英文'],ans:1},
+          {q:'「내일」是什麼意思？',opts:['昨天','今天','明天','後天'],ans:2},
+        ]
+      },
+      {
+        label:'② 自我介紹',
+        tip:'初次見面一律用합니다/해요體敬語。不要用반말，直到對方主動提議。',
+        vocab:[
+          {kr:'저는',rom:'jeo-neun',zh:'我（謙遜主格）'},
+          {kr:'반갑습니다',rom:'ban-gap-seum-ni-da',zh:'很高興認識你'},
+          {kr:'직업',rom:'ji-geop',zh:'職業'},
+          {kr:'디자이너',rom:'di-ja-i-neo',zh:'設計師'},
+          {kr:'어디에서 왔어요?',rom:'eo-di-e-seo wa-sseo-yo',zh:'您從哪裡來？'},
+          {kr:'타이완',rom:'ta-i-wan',zh:'台灣'},
+        ],
+        grammar:[{
+          pattern:'저는 ___예요/이에요',
+          explain:'自我介紹句。名詞末為母音加「예요」，末為子音加「이에요」。',
+          examples:[
+            {kr:'저는 웨이예요.',zh:'我是 Wei。（母音結尾）'},
+            {kr:'저는 조명 디자이너예요.',zh:'我是燈光設計師。'},
+          ]
+        }],
+        dialogue:[
+          {sp:'A',kr:'어디에서 오셨어요?',zh:'您從哪裡來？'},
+          {sp:'B',kr:'타이완에서 왔어요. 저는 조명 디자이너예요.',zh:'我從台灣來。我是燈光設計師。'},
+          {sp:'A',kr:'와, 멋있네요!',zh:'哇，好厲害！'},
+        ],
+        quiz:[
+          {q:'「반갑습니다」適合在什麼時候說？',opts:['道別時','初次見面','吃飯前','睡前'],ans:1},
+          {q:'「디자이너」後面接？',opts:['이에요','예요','에요','이요'],ans:1},
+        ]
+      }
+    ]
+  },
+  {
+    id:3, kr:'음식과 교통', titles:['飲食與點餐','地點與交通'],
+    topics:[
+      {
+        label:'① 飲食點餐',
+        tip:'叫服務生：「여기요!」；外帶：「포장이요」；不辣：「안 맵게 해주세요」——這三句在首爾超實用！',
+        vocab:[
+          {kr:'맛있어요',rom:'ma-si-sseo-yo',zh:'好吃'},
+          {kr:'맵다/달다',rom:'maep-da/dal-da',zh:'辣／甜'},
+          {kr:'___ 주세요',rom:'___ju-se-yo',zh:'請給我___'},
+          {kr:'얼마예요?',rom:'eol-ma-ye-yo',zh:'多少錢？'},
+          {kr:'하나 더',rom:'ha-na deo',zh:'再一個'},
+          {kr:'계산서',rom:'gye-san-seo',zh:'帳單'},
+        ],
+        grammar:[{
+          pattern:'___ 주세요（萬用點餐句）',
+          explain:'食物/飲料後直接加주세요。數量放名詞前，用固有語數字。',
+          examples:[
+            {kr:'아메리카노 두 잔 주세요.',zh:'請給我兩杯美式。'},
+            {kr:'삼겹살 이 인분 주세요.',zh:'請給我兩人份五花肉。'},
+          ]
+        }],
+        dialogue:[
+          {sp:'A',kr:'여기요! 주문할게요.',zh:'這裡！我要點餐。'},
+          {sp:'B',kr:'네, 뭐 드시겠어요?',zh:'好的，您要吃什麼？'},
+          {sp:'A',kr:'냉면이랑 소주 한 병 주세요.',zh:'請給我冷麵和一瓶燒酒。'},
+        ],
+        quiz:[
+          {q:'「계산서」是什麼？',opts:['菜單','帳單','收據','優惠券'],ans:1},
+          {q:'「再一杯」怎麼說？',opts:['한 잔 더 주세요','하나 주세요','두 잔이요','한 개 빼요'],ans:0},
+        ]
+      },
+      {
+        label:'② 地點交通',
+        tip:'Seoul 地鐵站名都有中文，T-money 卡在便利商店購買，通用地鐵、公車、計程車。',
+        vocab:[
+          {kr:'지하철/버스',rom:'ji-ha-cheol/beo-seu',zh:'地鐵／公車'},
+          {kr:'어디에요?',rom:'eo-di-e-yo',zh:'在哪裡？'},
+          {kr:'여기/저기',rom:'yeo-gi/jeo-gi',zh:'這裡／那裡'},
+          {kr:'내리세요',rom:'nae-ri-se-yo',zh:'請下車'},
+          {kr:'몇 호선?',rom:'myeot ho-seon',zh:'幾號線？'},
+          {kr:'갈아타다',rom:'ga-ra-ta-da',zh:'換乘'},
+        ],
+        grammar:[{
+          pattern:'___에 가고 싶어요',
+          explain:'「想去___」：에是目的地助詞，가다→가고 싶어요。問路直說目的地＋어디에요即可。',
+          examples:[
+            {kr:'익선동에 가고 싶어요.',zh:'我想去益善洞。'},
+            {kr:'홍대입구역 어디에요?',zh:'弘大入口站在哪裡？'},
+          ]
+        }],
+        dialogue:[
+          {sp:'A',kr:'경복궁 가려면 몇 호선이에요?',zh:'去景福宮要坐幾號線？'},
+          {sp:'B',kr:'3호선 타세요. 경복궁역에서 내리면 돼요.',zh:'坐3號線。在景福宮站下就好。'},
+        ],
+        quiz:[
+          {q:'「갈아타다」是什麼意思？',opts:['上車','下車','換乘','等車'],ans:2},
+          {q:'問「在哪裡」怎麼說？',opts:['얼마예요?','뭐예요?','어디에요?','언제예요?'],ans:2},
+        ]
+      }
+    ]
+  },
+  {
+    id:4, kr:'쇼핑과 부탁', titles:['購物表現','請求與拜託'],
+    topics:[
+      {
+        label:'① 購物',
+        tip:'廣藏市場和東大門可以殺價，百貨則定價。카드 돼요?（可以刷卡嗎？）是必備句。',
+        vocab:[
+          {kr:'비싸요/싸요',rom:'bi-ssa-yo/ssa-yo',zh:'貴／便宜'},
+          {kr:'깎아 주세요',rom:'gga-ga ju-se-yo',zh:'算便宜點'},
+          {kr:'카드 돼요?',rom:'ka-deu dwae-yo',zh:'可以刷卡嗎？'},
+          {kr:'이거/저거',rom:'i-geo/jeo-geo',zh:'這個／那個'},
+          {kr:'사이즈',rom:'sa-i-jeu',zh:'尺寸'},
+          {kr:'색깔',rom:'saek-gal',zh:'顏色'},
+        ],
+        grammar:[{
+          pattern:'이/그/저 ＋ 명사',
+          explain:'指示詞：이（靠近說話者）、그（靠近聽者）、저（兩者都遠）。',
+          examples:[
+            {kr:'이 티셔츠 얼마예요?',zh:'這件T恤多少錢？'},
+            {kr:'저 가방 보여 주세요.',zh:'請讓我看那個包包。'},
+          ]
+        }],
+        dialogue:[
+          {sp:'A',kr:'이거 얼마예요?',zh:'這個多少錢？'},
+          {sp:'B',kr:'오만 원이에요.',zh:'五萬韓元。'},
+          {sp:'A',kr:'좀 깎아 주세요. 카드 돼요?',zh:'算便宜點。可以刷卡嗎？'},
+        ],
+        quiz:[
+          {q:'「비싸요」意思是？',opts:['便宜','貴','好看','不要'],ans:1},
+          {q:'「這個」的韓文是？',opts:['그거','저거','이거','뭐'],ans:2},
+        ]
+      },
+      {
+        label:'② 請求拜託',
+        tip:'先說「실례지만（不好意思）」再開口，對方印象立刻好很多。',
+        vocab:[
+          {kr:'실례지만',rom:'sil-lye-ji-man',zh:'不好意思'},
+          {kr:'사진 찍어 주세요',rom:'…jji-geo ju-se-yo',zh:'請幫我拍照'},
+          {kr:'천천히',rom:'cheon-cheon-hi',zh:'慢慢地'},
+          {kr:'다시',rom:'da-si',zh:'再一次'},
+          {kr:'도와주세요',rom:'do-wa-ju-se-yo',zh:'請幫忙'},
+          {kr:'괜찮아요',rom:'gwaen-chan-a-yo',zh:'沒關係'},
+        ],
+        grammar:[{
+          pattern:'動詞語幹 ＋ 아/어 주세요',
+          explain:'「請為我做___」的客氣請求。語幹末母音ㅏ/ㅗ加아주세요，其他加어주세요。',
+          examples:[
+            {kr:'천천히 말해 주세요.',zh:'請說慢一點。'},
+            {kr:'예쁘게 찍어 주세요.',zh:'請拍漂亮一點。'},
+          ]
+        }],
+        dialogue:[
+          {sp:'A',kr:'실례지만, 사진 찍어 주실 수 있어요?',zh:'不好意思，可以幫我拍照嗎？'},
+          {sp:'B',kr:'물론이죠! 하나, 둘, 셋~',zh:'當然！一、二、三～'},
+          {sp:'A',kr:'감사합니다, 정말 친절하세요!',zh:'謝謝，您真的很親切！'},
+        ],
+        quiz:[
+          {q:'「천천히」是什麼意思？',opts:['快快地','慢慢地','再一次','一起'],ans:1},
+          {q:'請求句用什麼結尾？',opts:['주세요','가세요','이에요','있어요'],ans:0},
+        ]
+      }
+    ]
+  },
+  {
+    id:5, kr:'과거와 미래', titles:['過去式','未來式與意志'],
+    topics:[
+      {
+        label:'① 過去式',
+        tip:'每天用韓文寫一句日記是最快練習法。「오늘 ___했어요」就夠了！',
+        vocab:[
+          {kr:'먹었어요',rom:'meo-geo-sseo-yo',zh:'吃了'},
+          {kr:'갔어요',rom:'ga-sseo-yo',zh:'去了'},
+          {kr:'봤어요',rom:'bwa-sseo-yo',zh:'看了'},
+          {kr:'했어요',rom:'hae-sseo-yo',zh:'做了'},
+          {kr:'어제',rom:'eo-je',zh:'昨天'},
+          {kr:'지난주',rom:'ji-nan-ju',zh:'上週'},
+        ],
+        grammar:[{
+          pattern:'動詞語幹 ＋ 았/었어요',
+          explain:'語幹末母音ㅏ/ㅗ用「았어요」，其他用「었어요」，하다動詞變「했어요」。',
+          examples:[
+            {kr:'가다 → 갔어요',zh:'去→去了'},
+            {kr:'먹다 → 먹었어요',zh:'吃→吃了'},
+            {kr:'공부하다 → 공부했어요',zh:'讀書→讀書了'},
+          ]
+        }],
+        dialogue:[
+          {sp:'A',kr:'어제 뭐 했어요?',zh:'昨天做了什麼？'},
+          {sp:'B',kr:'친구를 만났어요. 같이 성수동에 갔어요.',zh:'見了朋友。一起去了聖水洞。'},
+          {sp:'A',kr:'재미있었어요?',zh:'有趣嗎？'},
+          {sp:'B',kr:'네, 분위기 정말 좋았어요!',zh:'是的，氛圍真的很棒！'},
+        ],
+        quiz:[
+          {q:'「하다」的過去式是？',opts:['하았어요','했어요','하었어요','하요'],ans:1},
+          {q:'「봤어요」是哪個動詞的過去式？',opts:['보다','봄다','부르다','밥다'],ans:0},
+        ]
+      },
+      {
+        label:'② 未來式',
+        tip:'出發前可以說：「8월에 서울에 갈 거예요！（8月打算去首爾！）」——現在你就會說了。',
+        vocab:[
+          {kr:'갈 거예요',rom:'gal geo-ye-yo',zh:'打算去'},
+          {kr:'할 거예요',rom:'hal geo-ye-yo',zh:'打算做'},
+          {kr:'여행',rom:'yeo-haeng',zh:'旅行'},
+          {kr:'계획',rom:'gye-hoek',zh:'計畫'},
+          {kr:'이번에',rom:'i-beon-e',zh:'這次'},
+          {kr:'꼭',rom:'kkok',zh:'一定'},
+        ],
+        grammar:[{
+          pattern:'動詞語幹 ＋ (으)ㄹ 거예요',
+          explain:'表達未來計畫。語幹末有子音加「을 거예요」，母音或ㄹ結尾加「ㄹ 거예요」。',
+          examples:[
+            {kr:'서울에 갈 거예요.',zh:'打算去首爾。'},
+            {kr:'이번에 이태원 꼭 갈 거예요.',zh:'這次一定要去梨泰院。'},
+          ]
+        }],
+        dialogue:[
+          {sp:'A',kr:'이번 여행에서 뭐 할 거예요?',zh:'這次旅行打算做什麼？'},
+          {sp:'B',kr:'성수동이랑 이태원 꼭 갈 거예요. 클럽도 볼 거예요!',zh:'一定要去聖水洞和梨泰院。也要去看夜店！'},
+        ],
+        quiz:[
+          {q:'表達「打算去」用？',opts:['갔어요','가요','갈 거예요','가세요'],ans:2},
+          {q:'「꼭」是什麼意思？',opts:['也許','一定','可能','偶爾'],ans:1},
+        ]
+      }
+    ]
+  },
+  {
+    id:6, kr:'가능과 조건', titles:['能力與可能性','條件句與假設'],
+    topics:[
+      {
+        label:'① 能力可能',
+        tip:'「한국어를 조금 할 수 있어요（韓語會說一點）」是旅途中展示誠意的最佳句子！',
+        vocab:[
+          {kr:'할 수 있어요',rom:'hal su i-sseo-yo',zh:'能做／會做'},
+          {kr:'할 수 없어요',rom:'hal su eop-sseo-yo',zh:'不能做'},
+          {kr:'잘해요',rom:'jal-hae-yo',zh:'做得好'},
+          {kr:'못해요',rom:'mo-tae-yo',zh:'做不好'},
+          {kr:'조금',rom:'jo-geum',zh:'一點點'},
+          {kr:'영어',rom:'yeong-eo',zh:'英文'},
+        ],
+        grammar:[{
+          pattern:'動詞語幹 ＋ (으)ㄹ 수 있어요/없어요',
+          explain:'能力句型。口語也常用「잘해요/못해요」表能力程度。',
+          examples:[
+            {kr:'한국어를 조금 할 수 있어요.',zh:'韓語會說一點。'},
+            {kr:'영어를 가르칠 수 있어요.',zh:'我會教英文。'},
+          ]
+        }],
+        dialogue:[
+          {sp:'A',kr:'한국어 할 수 있어요?',zh:'你會說韓語嗎？'},
+          {sp:'B',kr:'조금 할 수 있어요. 아직 배우고 있어요.',zh:'會一點。還在學習中。'},
+          {sp:'A',kr:'와, 잘하시네요!',zh:'哇，說得很好嘛！'},
+        ],
+        quiz:[
+          {q:'「못해요」是什麼意思？',opts:['做得好','做不好','想做','不想做'],ans:1},
+          {q:'「조금」是什麼意思？',opts:['很多','一點點','完全','沒有'],ans:1},
+        ]
+      },
+      {
+        label:'② 條件假設',
+        tip:'「혹시」除了「說不定」，也常用在句首表禮貌詢問，類似「請問一下⋯」，非常萬用！',
+        vocab:[
+          {kr:'만약',rom:'ma-nyak',zh:'假如'},
+          {kr:'그러면',rom:'geu-reo-myeon',zh:'那麼'},
+          {kr:'혹시',rom:'ho-ksi',zh:'請問／說不定'},
+          {kr:'시간이 있으면',rom:'…i-sseu-myeon',zh:'如果有時間的話'},
+          {kr:'괜찮으면',rom:'gwaen-chan-eu-myeon',zh:'如果可以的話'},
+          {kr:'비가 오면',rom:'bi-ga o-myeon',zh:'如果下雨的話'},
+        ],
+        grammar:[{
+          pattern:'動詞語幹 ＋ (으)면',
+          explain:'條件句「如果___的話」。語幹末有子音加「으면」，母音或ㄹ結尾加「면」。',
+          examples:[
+            {kr:'시간이 있으면 북촌도 가요.',zh:'如果有時間也去北村吧。'},
+            {kr:'비가 오면 택시 타요.',zh:'如果下雨就坐計程車。'},
+          ]
+        }],
+        dialogue:[
+          {sp:'A',kr:'혹시 괜찮으면 같이 광장시장 갈래요?',zh:'請問如果方便的話要不要一起去廣藏市場？'},
+          {sp:'B',kr:'좋아요! 시간 있으면 북촌도 가고 싶어요.',zh:'好啊！如果有時間也想去北村。'},
+        ],
+        quiz:[
+          {q:'「如果下雨」韓文是？',opts:['비가 오고','비가 오면','비가 와서','비가 오지만'],ans:1},
+          {q:'「혹시」常用來？',opts:['表達生氣','禮貌發問前置','道謝','道別'],ans:1},
+        ]
+      }
+    ]
+  },
+  {
+    id:7, kr:'감정과 접속', titles:['情緒表達','原因・結果・轉折'],
+    topics:[
+      {
+        label:'① 情緒',
+        tip:'「설레다」是韓語中極美的詞——那種期待又緊張、心跳加速的感覺，中文沒有完全對應的詞。',
+        vocab:[
+          {kr:'설레요',rom:'seol-le-yo',zh:'心跳加速（期待興奮）'},
+          {kr:'기뻐요',rom:'gi-ppeo-yo',zh:'高興'},
+          {kr:'그리워요',rom:'geu-ri-wo-yo',zh:'思念'},
+          {kr:'피곤해요',rom:'pi-gon-hae-yo',zh:'疲倦'},
+          {kr:'행복해요',rom:'haeng-bo-kae-yo',zh:'幸福'},
+          {kr:'기대돼요',rom:'gi-dae-dwae-yo',zh:'很期待'},
+        ],
+        grammar:[{
+          pattern:'___때문에 ___아/어요',
+          explain:'「因為___所以___」。때문에接名詞後，連接原因與情緒狀態。',
+          examples:[
+            {kr:'서울 여행 때문에 설레요.',zh:'因為首爾旅行而心跳加速。'},
+            {kr:'음악 때문에 행복해요.',zh:'因為音樂而幸福。'},
+          ]
+        }],
+        dialogue:[
+          {sp:'A',kr:'요즘 어때요?',zh:'最近怎麼樣？'},
+          {sp:'B',kr:'서울 여행이 기대돼서 너무 설레요!',zh:'因為期待首爾旅行，好興奮！'},
+          {sp:'A',kr:'좋겠다~ 즐겁게 다녀오세요!',zh:'真好啊～玩得開心！'},
+        ],
+        quiz:[
+          {q:'「설레요」最接近哪種感覺？',opts:['悲傷','疲倦','期待心跳加速','生氣'],ans:2},
+          {q:'「기대돼요」是什麼意思？',opts:['失望','期待','討厭','害怕'],ans:1},
+        ]
+      },
+      {
+        label:'② 原因轉折',
+        tip:'아/어서後面不能接過去式，這是最常見的錯誤！要說「因為做了A所以B」，用-(으)니까比較安全。',
+        vocab:[
+          {kr:'그래서',rom:'geu-rae-seo',zh:'所以'},
+          {kr:'하지만',rom:'ha-ji-man',zh:'但是'},
+          {kr:'그런데',rom:'geu-reon-de',zh:'不過／話說'},
+          {kr:'그리고',rom:'geu-ri-go',zh:'然後／還有'},
+          {kr:'왜냐하면',rom:'wae-nya-ha-myeon',zh:'因為（書面語）'},
+          {kr:'아니면',rom:'a-ni-myeon',zh:'或者'},
+        ],
+        grammar:[{
+          pattern:'動詞語幹 ＋ 아/어서（原因）',
+          explain:'連接原因與結果。注意：아/어서後面不可接過去式（았/었어요）。',
+          examples:[
+            {kr:'배가 고파서 밥을 먹었어요.',zh:'因為餓所以吃了飯。'},
+            {kr:'피곤해서 일찍 잤어요.',zh:'因為累所以早睡了。'},
+          ]
+        }],
+        dialogue:[
+          {sp:'A',kr:'왜 한국어를 배워요?',zh:'為什麼學韓語？'},
+          {sp:'B',kr:'서울에 가고 싶어서요. 그리고 분위기도 좋아해서요.',zh:'因為想去首爾。還有也喜歡那裡的氛圍。'},
+        ],
+        quiz:[
+          {q:'「그런데」可以用來？',opts:['表達原因','轉移話題','表達條件','比較'],ans:1},
+          {q:'아/어서後面接什麼最自然？',opts:['過去式','未來式','現在式結果','命令'],ans:2},
+        ]
+      }
+    ]
+  },
+  {
+    id:8, kr:'퀴어 공간과 대화', titles:['同志場景搭訕對話','실용 표현（實用句）'],
+    rainbow:true,
+    topics:[
+      {
+        label:'① 搭訕對話',
+        tip:'首爾同志友善區域：梨泰院종로（鐘路）一帶的게이 바（gay bar）圈是韓國最大同志聚集地。梨泰院近年也有許多 queer-friendly 空間。開口前先微笑，韓國人對誠意滿滿的外國人通常非常友善。',
+        vocab:[
+          {kr:'혹시 여기 자주 와요?',rom:'ho-ksi yeo-gi ja-ju wa-yo',zh:'請問你常來這裡嗎？'},
+          {kr:'한 잔 같이 할래요?',rom:'han jan ga-chi hal-lae-yo',zh:'要不要一起喝一杯？'},
+          {kr:'번호 알 수 있어요?',rom:'beon-ho al su i-sseo-yo',zh:'可以給我你的號碼嗎？'},
+          {kr:'인스타 있어요?',rom:'in-seu-ta i-sseo-yo',zh:'你有 Instagram 嗎？'},
+          {kr:'멋있어요',rom:'meo-si-sseo-yo',zh:'你很帥／很酷'},
+          {kr:'같이 사진 찍어도 돼요?',rom:'ga-chi sa-jin jji-geo-do dwae-yo',zh:'可以一起拍照嗎？'},
+        ],
+        grammar:[{
+          pattern:'같이 ___할래요? （邀約句）',
+          explain:'「要不要一起___？」是輕鬆邀約的萬用句型。같이（一起）+ 動詞語幹 + 할래요。比起「가요（走吧）」更溫柔、留給對方空間。',
+          examples:[
+            {kr:'같이 한 잔 할래요?',zh:'要不要一起喝一杯？'},
+            {kr:'같이 춤 출래요?',zh:'要不要一起跳舞？'},
+          ]
+        }],
+        dialogue:[
+          {sp:'A',kr:'혹시 여기 자주 와요?',zh:'請問你常來這裡嗎？'},
+          {sp:'B',kr:'가끔 와요. 처음 봤는데 타이완에서 왔어요?',zh:'偶爾來。第一次見到你，是從台灣來的嗎？'},
+          {sp:'A',kr:'맞아요! 출장으로 왔어요. 분위기가 너무 좋아서요.',zh:'對！我來出差的。因為這裡氛圍太好了。'},
+          {sp:'B',kr:'그렇군요. 같이 한 잔 할래요?',zh:'原來如此。要不要一起喝一杯？'},
+          {sp:'A',kr:'좋아요! 저는 웨이예요.',zh:'好啊！我是 Wei。'},
+          {sp:'B',kr:'저는 준호예요. 반가워요~',zh:'我是俊浩。很高興認識你～'},
+        ],
+        quiz:[
+          {q:'「같이 한 잔 할래요?」是什麼意思？',opts:['你喝了什麼？','要不要一起喝一杯？','這杯多少錢？','你常喝酒嗎？'],ans:1},
+          {q:'「멋있어요」用來稱讚？',opts:['食物好吃','地方好看','人帥氣有型','天氣好'],ans:2},
+        ]
+      },
+      {
+        label:'② 實用句',
+        tip:'不想繼續就說「저 친구를 찾아야 해서요（我得去找朋友了）」，禮貌退場不尷尬。「게이예요?」在不熟的情況下直接問比較冒昧，建議先建立對話再看情況。',
+        vocab:[
+          {kr:'저 친구 찾아야 해요',rom:'jeo chin-gu cha-ja-ya hae-yo',zh:'我得去找朋友了（禮貌退場）'},
+          {kr:'괜찮아요, 저는 됐어요',rom:'gwaen-chan-a-yo, jeo-neun dwae-sseo-yo',zh:'沒關係，我不用了（拒絕）'},
+          {kr:'남자친구 있어요?',rom:'nam-ja-chin-gu i-sseo-yo',zh:'你有男友嗎？'},
+          {kr:'솔로예요',rom:'sol-lo-ye-yo',zh:'單身'},
+          {kr:'연락해요',rom:'yeol-la-kae-yo',zh:'保持聯絡'},
+          {kr:'다음에 또 봐요',rom:'da-eu-me tto bwa-yo',zh:'下次再見'},
+        ],
+        grammar:[{
+          pattern:'___야/아야 해요（義務、需要）',
+          explain:'「必須___/得___」。야/아야 해요是表示義務的句型，用來禮貌說明自己需要做某事——是優雅退場的好工具。',
+          examples:[
+            {kr:'저 친구를 찾아야 해요.',zh:'我得去找朋友了。'},
+            {kr:'이제 가야 해요.',zh:'我現在得走了。'},
+          ]
+        }],
+        dialogue:[
+          {sp:'A',kr:'카카오톡 있어요? 연락해요!',zh:'你有 KakaoTalk 嗎？保持聯絡！'},
+          {sp:'B',kr:'있어요! 아이디 알려 줄게요.',zh:'有！我告訴你帳號。'},
+          {sp:'A',kr:'다음에 또 봐요. 오늘 정말 즐거웠어요.',zh:'下次再見。今天真的很開心。'},
+          {sp:'B',kr:'저도요! 서울에서 즐거운 시간 보내세요~',zh:'我也是！在首爾玩得開心哦～'},
+        ],
+        quiz:[
+          {q:'「솔로예요」是什麼意思？',opts:['我有伴侶','我單身','我很忙','我要走了'],ans:1},
+          {q:'禮貌說「我得走了」怎麼說？',opts:['안녕히 가세요','저 가야 해요','저 싫어요','다음에요'],ans:1},
+        ]
+      }
+    ]
+  },
+  {
+    id:9, kr:'취미·비교·문화', titles:['職業興趣與比較','韓國文化與禮儀'],
+    topics:[
+      {
+        label:'① 職業比較',
+        tip:'「저는 VJ예요（我是VJ）」在首爾夜店是很好的破冰句。聖水洞比弘大更有工業風設計感，非常值得一逛。',
+        vocab:[
+          {kr:'조명 디자이너',rom:'jo-myeong di-ja-i-neo',zh:'燈光設計師'},
+          {kr:'___에 관심이 있어요',rom:'…gwan-sim-i i-sseo-yo',zh:'對___有興趣'},
+          {kr:'A보다 B가 더',rom:'…bo-da…deo',zh:'B比A更___'},
+          {kr:'가장',rom:'ga-jang',zh:'最'},
+          {kr:'훨씬',rom:'hwol-sshin',zh:'差很多、更加'},
+          {kr:'힙하다',rom:'hi-pa-da',zh:'很潮（hip）'},
+        ],
+        grammar:[{
+          pattern:'A보다 B가 더 ___아/어요',
+          explain:'比較句：「B比A更___」。보다接比較基準後，더放在形容詞前。훨씬表差距更大。',
+          examples:[
+            {kr:'성수동이 홍대보다 더 힙해요.',zh:'聖水洞比弘大更潮。'},
+            {kr:'지하철이 버스보다 훨씬 빨라요.',zh:'地鐵比公車快多了。'},
+          ]
+        }],
+        dialogue:[
+          {sp:'A',kr:'어떤 일 하세요?',zh:'您做什麼工作？'},
+          {sp:'B',kr:'조명 디자이너예요. 타이베이 클럽에서 VJ도 해요.',zh:'我是燈光設計師。也在台北夜店做VJ。'},
+          {sp:'A',kr:'서울도 클럽 씬이 정말 발달했어요!',zh:'首爾的夜店圈也很發達！'},
+          {sp:'B',kr:'그렇군요. 홍대랑 이태원 중에 어디가 더 좋아요?',zh:'原來如此。弘大和梨泰院哪個更好？'},
+          {sp:'A',kr:'분위기는 이태원이 훨씬 독특해요.',zh:'氛圍方面梨泰院獨特很多。'},
+        ],
+        quiz:[
+          {q:'「훨씬」表示？',opts:['稍微','差很多','一樣','不確定'],ans:1},
+          {q:'「對燈光有興趣」韓文是？',opts:['조명이 좋아요','조명에 관심이 있어요','조명을 알아요','조명을 해요'],ans:1},
+        ]
+      },
+      {
+        label:'② 文化禮儀',
+        tip:'「눈치（察言觀色能力）」是韓國文化核心。「빨리빨리」文化讓服務飛快，但同樣也需要耐心面對有時直接的溝通方式。',
+        vocab:[
+          {kr:'눈치',rom:'nun-chi',zh:'察言觀色能力'},
+          {kr:'빨리빨리',rom:'ppal-li ppal-li',zh:'快快快（急性子文化）'},
+          {kr:'정 (情)',rom:'jeong',zh:'情感羈絆'},
+          {kr:'존댓말/반말',rom:'jon-daen-mal/ban-mal',zh:'敬語／非敬語'},
+          {kr:'나이',rom:'na-i',zh:'年齡'},
+          {kr:'반말해도 돼요?',rom:'…dwae-yo',zh:'可以說非敬語嗎？'},
+        ],
+        grammar:[{
+          pattern:'存댓말 vs 반말',
+          explain:'對長輩或初識者一律用존댓말（해요體）。去掉요就是반말，只能在對方同意後使用。',
+          examples:[
+            {kr:'어디 가세요? (존댓말)',zh:'您要去哪裡？'},
+            {kr:'어디 가? (반말)',zh:'你去哪？'},
+          ]
+        }],
+        dialogue:[
+          {sp:'A',kr:'우리 말 놓을까요? 친구처럼요.',zh:'我們說非敬語好嗎？像朋友一樣。'},
+          {sp:'B',kr:'좋아요! 그렇게 해요.',zh:'好啊！就這樣吧。'},
+          {sp:'A',kr:'그래, 잘 부탁해!',zh:'好，請多關照！（非敬語）'},
+        ],
+        quiz:[
+          {q:'「눈치」的意思？',opts:['速度','察言觀色','情感','年齡'],ans:1},
+          {q:'初次見面應該用？',opts:['반말','존댓말','哪個都可以','英語'],ans:1},
+        ]
+      }
+    ]
+  },
+  {
+    id:10, kr:'총정리와 실전', titles:['全句型總複習','首爾出發前實戰模擬'],
+    topics:[
+      {
+        label:'① 句型總複習',
+        tip:'10週下來你已掌握：時態三連、能力句、條件句、原因句、比較句——足以應付首爾大部分日常對話！',
+        vocab:[
+          {kr:'수고했어요',rom:'su-go-hae-sseo-yo',zh:'辛苦了'},
+          {kr:'잘했어요',rom:'jal-hae-sseo-yo',zh:'做得好'},
+          {kr:'앞으로',rom:'a-peu-ro',zh:'今後'},
+          {kr:'자신감',rom:'ja-sin-gam',zh:'自信心'},
+          {kr:'파이팅',rom:'pa-i-ting',zh:'加油'},
+          {kr:'계속',rom:'gye-sok',zh:'繼續'},
+        ],
+        grammar:[{
+          pattern:'10週核心句型一覽',
+          explain:'全部學過的時態與句型：',
+          examples:[
+            {kr:'現在：가요 / 過去：갔어요 / 未來：갈 거예요',zh:'基本時態三連'},
+            {kr:'能力：갈 수 있어요 / 條件：가면 / 原因：가서',zh:'進階句型三連'},
+            {kr:'請求：가 주세요 / 比較：A보다 B가 더',zh:'應用句型'},
+          ]
+        }],
+        dialogue:[
+          {sp:'A',kr:'10주 공부했어요. 많이 늘었죠?',zh:'讀了10週。進步了吧？'},
+          {sp:'B',kr:'네! 자신감이 생겼어요.',zh:'是的！有自信了。'},
+          {sp:'A',kr:'서울에서 꼭 써 보세요!',zh:'一定要在首爾用用看！'},
+        ],
+        quiz:[
+          {q:'「앞으로」是什麼意思？',opts:['從前','現在','今後','一直'],ans:2},
+          {q:'「자신감」是什麼意思？',opts:['焦慮','自信心','好奇心','努力'],ans:1},
+        ]
+      },
+      {
+        label:'② 實戰模擬',
+        tip:'即使說得不完美也沒關係，韓國人看到外國人努力說韓語都會非常開心配合。放鬆開口就是勝利！파이팅！',
+        vocab:[
+          {kr:'출장',rom:'chul-jang',zh:'出差'},
+          {kr:'관광',rom:'gwan-gwang',zh:'觀光'},
+          {kr:'숙소',rom:'suk-so',zh:'住宿'},
+          {kr:'체크인',rom:'che-keu-in',zh:'入住'},
+          {kr:'예약했어요',rom:'ye-ya-kae-sseo-yo',zh:'我有預約'},
+          {kr:'잘 부탁드립니다',rom:'jal bu-tak-deu-rim-ni-da',zh:'請多關照（正式）'},
+        ],
+        grammar:[{
+          pattern:'出差入境情境綜合應用',
+          explain:'機場、旅館、餐廳、問路、夜店——把10週學的全串起來。',
+          examples:[
+            {kr:'출장으로 왔어요. 3박 4일이에요.',zh:'（因）出差來的。3晚4天。'},
+            {kr:'체크인 하려고 왔어요. 예약했어요.',zh:'我來辦入住。我有預約。'},
+          ]
+        }],
+        dialogue:[
+          {sp:'A',kr:'어떤 목적으로 오셨어요?',zh:'您此行的目的是？'},
+          {sp:'B',kr:'출장이요. 그리고 관광도 할 거예요.',zh:'出差。還有也打算觀光。'},
+          {sp:'A',kr:'얼마나 계실 거예요?',zh:'您打算待多久？'},
+          {sp:'B',kr:'일주일 있을 거예요. 잘 부탁드립니다!',zh:'打算待一週。請多關照！'},
+        ],
+        quiz:[
+          {q:'「출장」是什麼意思？',opts:['旅遊','出差','留學','轉機'],ans:1},
+          {q:'「잘 부탁드립니다」適合在什麼場合說？',opts:['道別時','請求對方關照時','表示不滿時','點餐時'],ans:1},
+        ]
+      }
+    ]
+  },
+];
+
+/* ── TTS ENGINE (Google Translate Audio) ── */
+const SPEAK_ICON = '<svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>';
+
+let currentAudio = null;
+function speak(text, btn){
+  // stop any playing audio
+  if(currentAudio){
+    currentAudio.pause();
+    currentAudio = null;
+  }
+  document.querySelectorAll('.speak-btn.speaking').forEach(b=>b.classList.remove('speaking'));
+
+  // clean text — strip non-Korean chars for cleaner pronunciation
+  const clean = text.replace(/[（）()／/＋+·。！？,.，、…]/g,' ').trim();
+  const url = 'https://translate.google.com/translate_tts?ie=UTF-8&tl=ko&client=tw-ob&q=' + encodeURIComponent(clean);
+
+  const audio = new Audio(url);
+  audio.playbackRate = 0.9;
+  currentAudio = audio;
+  if(btn){
+    btn.classList.add('speaking');
+    audio.onended = ()=>{ btn.classList.remove('speaking'); currentAudio=null; };
+    audio.onerror = ()=>{
+      btn.classList.remove('speaking');
+      currentAudio = null;
+      // fallback to Web Speech API if Google fails
+      fallbackSpeak(text, btn);
+    };
+  }
+  audio.play().catch(()=>fallbackSpeak(text, btn));
+}
+function fallbackSpeak(text, btn){
+  if(!window.speechSynthesis) return;
+  speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = 'ko-KR';
+  utter.rate = 0.7;
+  utter.pitch = 1.2;
+  const voices = speechSynthesis.getVoices();
+  const v = voices.find(v=>v.lang==='ko-KR')||voices.find(v=>v.lang.startsWith('ko'));
+  if(v) utter.voice = v;
+  if(btn){ btn.classList.add('speaking'); utter.onend=()=>btn.classList.remove('speaking'); }
+  speechSynthesis.speak(utter);
+}
+function speakBtn(text){
+  return `<button class="speak-btn" onclick="event.stopPropagation();speak('${text.replace(/'/g,"\'")}',this)" title="播放發音">${SPEAK_ICON}</button>`;
+}
+
+let cur=1, done=new Set(JSON.parse(localStorage.getItem('kr10d')||'[]')), qs={}, at={};
+function save(){localStorage.setItem('kr10d',JSON.stringify([...done]))}
+function updateBar(){
+  const n=done.size;
+  document.getElementById('progress-fill').style.width=(n/10*100)+'%';
+  document.getElementById('progress-text').textContent=n+' / 10 週';
+}
+function buildSidebar(){
+  const sb=document.getElementById('sidebar');
+  sb.innerHTML='';
+  const phases=['基礎字母','數字與介紹','飲食與移動','購物與請求','時態系統','能力與條件','情緒連接','同志場景 🏳️‍🌈','文化比較','總複習'];
+  W.forEach((w,i)=>{
+    const pl=document.createElement('div');
+    pl.className='phase-label';
+    pl.textContent=phases[i];
+    sb.appendChild(pl);
+    const btn=document.createElement('button');
+    const isRainbow=w.rainbow&&!done.has(w.id);
+    btn.className='week-btn'+(w.id===cur?' active':'')+(done.has(w.id)?' completed':'')+(isRainbow?' rainbow-week':'');
+    btn.innerHTML=`<span class="wnum">${w.id}</span><span class="wtopic">${w.titles[0]}<span class="wkr">${w.kr}</span></span>`;
+    btn.onclick=()=>go(w.id);
+    sb.appendChild(btn);
+  });
+}
+function buildWeek(w){
+  qs[w.id]=qs[w.id]||{};
+  if(!at[w.id])at[w.id]=0;
+  let h=`<div class="week-header">
+    <span class="week-num-big">WEEK ${String(w.id).padStart(2,'0')}</span>
+    <div class="week-titles">
+      <h1 class="week-title-big">${w.titles[0]} × ${w.titles[1]}</h1>
+      <div class="week-subtitle">${w.kr}　·　兩主題合併週</div>
+    </div>
+    <button class="complete-btn ${done.has(w.id)?'done':''}" onclick="toggleDone(${w.id})">${done.has(w.id)?'✓ 已完成':'標記完成'}</button>
+  </div>`;
+  if(w.rainbow){
+    h+=`<div class="rainbow-banner"><div class="rainbow-inner">
+      <strong>🏳️‍🌈 首爾同志友善場景</strong>　鐘路（종로）是首爾最歷史悠久的同志聚集地，梨泰院近年也有許多 queer-friendly 空間。本週學習在這些場合自然開口的句型，涵蓋搭訕、邀約與禮貌退場。
+    </div></div>`;
+  }
+  h+=`<div class="topic-tabs">`;
+  w.topics.forEach((t,i)=>{h+=`<button class="topic-tab ${at[w.id]===i?'active':''}" onclick="switchTopic(${w.id},${i})">${t.label}</button>`;});
+  h+=`</div>`;
+  w.topics.forEach((t,ti)=>{
+    const isA=at[w.id]===ti;
+    h+=`<div class="topic-panel ${isA?'active':''}" id="tp-${w.id}-${ti}">`;
+    if(t.tip)h+=`<div class="tip-box"><strong>💡　</strong>${t.tip}</div>`;
+    h+=`<div class="section"><div class="section-title">詞彙　어휘</div><div class="vocab-grid">`;
+    t.vocab.forEach(v=>{
+      const rawKr = v.kr.replace(/[（）()／/＋+A-Za-z0-9\s·．。！？,.，、…\-]/g,'').trim()||v.kr.split('/')[0].trim();
+      h+=`<div class="vocab-card">
+        <div class="vocab-card-top">
+          <div class="vocab-card-text" onclick="this.closest('.vocab-card').classList.toggle('revealed')">
+            <span class="kr-word">${v.kr}</span>
+            <span class="romanization">${v.rom}</span>
+          </div>
+          ${speakBtn(rawKr)}
+        </div>
+        <div class="meaning">${v.zh}</div>
+      </div>`;
+    });
+    h+=`</div><p style="font-size:.68rem;color:var(--muted);margin-top:.45rem;">點擊文字顯示中文　<span style="opacity:.6">▶ 喇叭播放發音</span></p></div>`;
+    h+=`<div class="section"><div class="section-title">文法　문법</div>`;
+    t.grammar.forEach(g=>{
+      h+=`<div class="grammar-box"><div class="grammar-pattern">${g.pattern}</div><div class="grammar-explain">${g.explain}</div><div class="grammar-example">`;
+      g.examples.forEach(ex=>{
+        const gKr = ex.kr.split('→')[0].replace(/[（）()A-Za-z0-9\s·,，]/g,'').trim()||ex.kr.trim();
+        h+=`<div><span class="kr">${ex.kr}</span>${speakBtn(gKr)}<br><span class="zh">${ex.zh}</span></div><br>`;
+      });
+      h+=`</div></div>`;
+    });
+    h+=`</div>`;
+    h+=`<div class="section"><div class="section-title">對話練習　대화</div><div class="dialogue">`;
+    t.dialogue.forEach((line,i)=>{
+      const sc=i%2===0?'':'b';
+      h+=`<div class="dialogue-line"><div class="speaker ${sc}">${line.sp}</div><div class="dialogue-text"><div class="dialogue-kr-wrap"><span class="kr">${line.kr}</span>${speakBtn(line.kr)}</div><span class="zh">${line.zh}</span></div></div>`;
+    });
+    h+=`</div></div>`;
+    h+=`<div class="section"><div class="section-title">小測驗　퀴즈</div><div class="quiz-wrap">`;
+    t.quiz.forEach((q,qi)=>{
+      const key=`${ti}-${qi}`;
+      h+=`<div class="quiz-item" id="quiz-${w.id}-${key}"><div class="quiz-q">${q.q}</div><div class="quiz-options">`;
+      q.opts.forEach((opt,oi)=>{
+        const st=qs[w.id][key];
+        const cls=st===undefined?'':(oi===q.ans?' correct':(st===oi?' wrong':''));
+        h+=`<button class="quiz-opt${cls}" ${st!==undefined?'disabled':''} onclick="answer(${w.id},'${key}',${oi},${q.ans})">${opt}</button>`;
+      });
+      h+=`</div></div>`;
+    });
+    h+=`</div></div></div>`;
+  });
+  h+=`<div class="week-nav">
+    <button class="nav-btn" onclick="go(${w.id-1})" ${w.id<=1?'disabled':''}>← 上一週</button>
+    <button class="nav-btn" onclick="go(${w.id+1})" ${w.id>=10?'disabled':''}>下一週 →</button>
+  </div>`;
+  return h;
+}
+function switchTopic(wid,ti){
+  at[wid]=ti;
+  document.querySelectorAll(`[id^="tp-${wid}-"]`).forEach((el,i)=>el.classList.toggle('active',i===ti));
+  document.querySelectorAll('.topic-tab').forEach((b,i)=>b.classList.toggle('active',i===ti));
+}
+function go(id){
+  if(id<1||id>10)return;
+  cur=id;
+  const w=W.find(x=>x.id===id);
+  document.getElementById('main-content').innerHTML=`<div class="week-panel active">${buildWeek(w)}</div>`;
+  buildSidebar();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function toggleDone(id){
+  done.has(id)?done.delete(id):done.add(id);
+  save();updateBar();go(id);
+}
+function answer(wid,key,sel,ans){
+  qs[wid]=qs[wid]||{};
+  qs[wid][key]=sel;
+  document.getElementById(`quiz-${wid}-${key}`).querySelectorAll('.quiz-opt').forEach((b,i)=>{
+    b.disabled=true;
+    if(i===ans)b.classList.add('correct');
+    else if(i===sel)b.classList.add('wrong');
+  });
+}
+updateBar();go(1);
+</script>
+</body>
+</html>
